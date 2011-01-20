@@ -1,0 +1,83 @@
+<?php
+
+/**
+ * Implements hook_install().
+ */
+function vault_install() {
+  db_query("ALTER TABLE {vault_data} ADD FOREIGN KEY (vault) REFERENCES {vault} (machine_name) ON DELETE CASCADE");
+}
+
+/**
+ * Implements hook_schema().
+ */
+function vault_schema() {
+  $schema['vault'] = array(
+    'description' => 'A vault which holds user data.  All data in a single vault is encrypted using the same key.',
+    'fields' => array(
+      'name' => array(
+        'description' => 'A human-readable name for the vault.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+      ),
+      'machine_name' => array(
+        'description' => 'A machine-readable name for the vault.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+      ),
+      'uid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'The user who created this vault.',
+      ),
+      'key_hash' => array(
+        'description' => 'A hash of the encryption key for this vault to ensure that only a single encryption key is used to store data in this vault.',
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('machine_name'),
+  );
+
+  $schema['vault_data'] = array(
+    'description' => 'Data to be placed in a vault',
+    'fields' => array(
+      'vdid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Primary Key: Vault Data ID',
+        'default' => 0,
+      ),
+      'uid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'The user who added this vault data',
+      ),
+      'vault' => array(
+        'description' => 'The vault this data is stored in.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+      ),
+      'data' => array(
+        'description' => 'The data being stored.',
+        'type' => 'blob',
+        'size' => 'big',
+      ),
+    ),
+    'foreign keys' => array(
+      'vault' => array(
+        'table' => 'vault',
+        'columns' => array('vault' => 'machine_name'),
+      ),
+    ),
+    'primary key' => array('vdid'),
+  );
+
+  return $schema;
+}

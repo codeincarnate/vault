@@ -1,0 +1,10 @@
+name = Vault
+description = Allows creation of secure "vaults" which store encrypted data for later access.
+core = 7.x
+version = 7.x-0.1
+package = Vault
+
+files[] = vault.module
+files[] = vault.install
+files[] = ui/admin.ui.inc
+files[] = ui/vault.ui.inc

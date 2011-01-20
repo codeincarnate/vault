@@ -1,0 +1,88 @@
+<?php
+
+
+/**
+ * Implements hook_menu().
+ */
+function vault_menu() {
+  $items['vault'] = array(
+    'title' => 'Vaults',
+    'description' => 'A list of all vaults',
+    'page callback' => 'vault_list',
+    'access arguments' => array('view vaults'),
+    'file' => 'ui/vault.ui.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  $items['vault/add'] = array(
+    'title' => 'Add Vault',
+    'description' => 'Add a vault',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('vault_form'),
+    'access arguments' => array('add vaults'),
+    'file' => 'ui/vault.ui.inc',
+    'context' => MENU_CONTEXT_PAGE,
+    'type' => MENU_LOCAL_ACTION,
+  );
+
+  $items['vault/%vault'] = array(
+    'page callback' => 'vault_view',
+    'page arguments' => array(1),
+  );
+
+  $items['vault/%vault/edit'] = array(
+
+  );
+
+  $items['vault/%vault/delete'] = array(
+
+  );
+
+  return $items;
+}
+
+
+/**
+ * Implements hook_permission().
+ */
+function vault_permission() {
+  return array(
+    'view vaults' => array(
+      'title' => t('View Vaults'),
+      'description' => t('Allows user to view a list of secure storage vaults that have been added to the system.'),
+    ),
+    'add vaults' => array(
+      'title' => t('Add Vaults'),
+      'description' => t('Allows user to add secure storage vaults.'),
+    ),
+  );
+}
+
+
+/**
+ * Load a single vault given it's machine name.
+ *
+ * @param $machine_name
+ *   The machine_name of the vault.
+ */
+function vault_load($machine_name) {
+  return array_pop(vault_multiload(array($machine_name)));
+}
+
+/**
+ * Load multiple vaults given an array of vault machine names.
+ *
+ * @param $machine_names
+ *   An array of machine_names to load.  If the array is empty all vaults will be loaded.
+ */
+function vault_multiload($machine_names = array()) {
+  $select = db_select('vault', 'v')
+    ->fields('v', array('name', 'machine_name', 'uid', 'key_hash'))
+    ->orderBy('name');
+
+  if (!empty($machine_names)) {
+    $select->condition('machine_name', $machine_names, 'IN');
+  }
+
+  return $select->execute()->fetchAll();
+}
