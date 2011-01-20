@@ -6,3 +6,6 @@ This provides a small a window of opportunity as possible for someone to break i
 
 Vault is a work in progress.  Currently it can only encrypt text data, but the hope is that it will be able to encrypt
 a wide variety of data types in the future.
+
+There will not be any official releases of this module until it has had a full security audit and I can confirm that it
+has no serious security vulnerabilities.  Until that time __use at your own risk__.
