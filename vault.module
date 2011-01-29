@@ -56,8 +56,21 @@ function vault_permission() {
       'description' => t('Allows user to add secure storage vaults.'),
     ),
   );
+  
 }
 
+
+/**
+ * Check to see if a vault exists
+ */
+function vault_exists($machine_name) {
+  $result = db_select('vault', 'v')
+    ->fields('v', array('machine_name'))
+    ->execute()
+    ->fetchAll();
+
+  return empty($result);
+}
 
 /**
  * Load a single vault given it's machine name.
@@ -85,4 +98,22 @@ function vault_multiload($machine_names = array()) {
   }
 
   return $select->execute()->fetchAll();
+}
+
+
+/**
+ * Add or update a vault
+ */
+function vault_save($vault) {
+  global $user;
+  require_once DRUPAL_ROOT . '/includes/password.inc';
+
+  if (vault_exists($vault['machine_name'])) {
+    drupal_write_record('vault', $vault, 'machine_name');
+  }
+  else {
+    $vault['key_hash'] = _password_crypt('sha512', $vault['key'], _password_generate_salt(20));
+    $vault['uid'] = $user->uid;
+    drupal_write_record('vault', $vault);
+  }
 }

@@ -13,8 +13,8 @@ function vault_list() {
   
   foreach(vault_multiload() as $vault) {
     $rows[] = array(
-      check_plain($vault['name']),
-      check_plain($vault['machine_name']),
+      check_plain($vault->name),
+      check_plain($vault->machine_name),
       'Operations will go here!',
     );
   }
@@ -32,9 +32,11 @@ function vault_list() {
 
 
 /**
- *
+ * Add or edit a vault
  */
 function vault_form($form_state, $vault = array()) {
+  $form['#redirect'] = 'vault';
+
   $form['name'] = array(
     '#type' => 'textfield',
     '#title' => t('Name'),
@@ -72,4 +74,12 @@ function vault_form($form_state, $vault = array()) {
 
 
   return $form;
+}
+
+/**
+ * Submit callback
+ */
+function vault_form_submit($form, $form_state) {
+    vault_save($form_state['values']);
+    drupal_set_message(t('Your vault has been created.'));
 }
