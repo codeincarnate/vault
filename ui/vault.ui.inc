@@ -12,12 +12,16 @@ function vault_list() {
   $rows = array();
   
   foreach(vault_multiload() as $vault) {
+    $links = menu_contextual_links('vault', 'vault', array($vault->machine_name));
+
     $rows[] = array(
       check_plain($vault->name),
       check_plain($vault->machine_name),
-      'Operations will go here!',
+      theme('links', array('links' => $links, 'attributes' => array('class' => 'links operations'))),
     );
   }
+
+
 
   $build['vault_table'] = array(
     '#theme' => 'table',
@@ -82,4 +86,54 @@ function vault_form($form_state, $vault = array()) {
 function vault_form_submit($form, $form_state) {
     vault_save($form_state['values']);
     drupal_set_message(t('Your vault has been created.'));
+}
+
+function vault_view($vault) {
+ 
+  
+  $vault_keyname = $vault->machine_name . '_key';
+
+  // If the vault hasn't been unlocked collect the key
+  if (!isset($_SESSION[$vault_keyname])) {
+    return drupal_get_form('vault_open_form', $vault);
+  }
+  else {
+    return "The vault is open!";
+  }
+  // If the vault has been unlocked then allow browsing of vault data and adding vault data
+}
+
+
+
+function vault_open_form($form_state, $vault) {
+
+
+  $form['key'] = array(
+    '#type' => 'password',
+    '#title' => t('Key'),
+    '#description' => t('Please enter the key to open this vault.'),
+    '#required' => TRUE,
+  );
+
+  $form['open'] = array(
+    '#type' => 'submit',
+    '#value' => t('Unlock'),
+  );
+
+  return $form;
+}
+
+
+function vault_open_form_submit($form, $form_state) {
+  $key = $form_state['values']['key'];
+  $vault = $form_state['build_info']['args'][0];
+
+
+  if (vault_key_match($vault, $key)) {
+    $_SESSION[$vault->machine_name . '_key'] = $key;
+    drupal_set_message(t('Vault has been opened'));
+  }
+  else {
+    drupal_set_message(t('Could not open vault.'), 'error');
+  }
 }

@@ -26,16 +26,27 @@ function vault_menu() {
   );
 
   $items['vault/%vault'] = array(
+    'title' => 'Open',
     'page callback' => 'vault_view',
     'page arguments' => array(1),
+    'access arguments' => array('view vaults'),
+    'file' => 'ui/vault.ui.inc',
+    'context' => MENU_CONTEXT_INLINE,
+    'type' => MENU_LOCAL_TASK,
   );
-
+  
   $items['vault/%vault/edit'] = array(
 
   );
 
   $items['vault/%vault/delete'] = array(
-
+    'title' => 'Delete',
+    'page callback' => 'vault_delete',
+    'page arguments' => array(1),
+    'access arguments' => array('delete vaults'),
+    'file' => 'ui/vault.ui.inc',
+    'context' => MENU_CONTEXT_INLINE,
+    'type' => MENU_LOCAL_TASK,
   );
 
   return $items;
@@ -116,4 +127,21 @@ function vault_save($vault) {
     $vault['uid'] = $user->uid;
     drupal_write_record('vault', $vault);
   }
+}
+
+/**
+ *
+ */
+function vault_key_match($vault, $key) {
+  require_once DRUPAL_ROOT . '/includes/password.inc';
+
+  echo '<pre>';
+  var_dump($vault);
+  $crypted = _password_crypt('sha512', $key, _password_generate_salt(20));
+  var_dump($crypted);
+  echo '</pre>';
+  //exit(0);
+
+  $hash = _password_crypt('sha512', $key, $vault->key_hash);
+  return ($hash && $vault->key_hash == $hash);
 }
