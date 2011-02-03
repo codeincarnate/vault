@@ -90,15 +90,36 @@ function vault_form_submit($form, $form_state) {
 
 function vault_view($vault) {
  
-  
+  // TODO: Put a limit on number of incorrect attempts before the vault locks down for a certain amount of time
   $vault_keyname = $vault->machine_name . '_key';
+
 
   // If the vault hasn't been unlocked collect the key
   if (!isset($_SESSION[$vault_keyname])) {
     return drupal_get_form('vault_open_form', $vault);
   }
   else {
-    return "The vault is open!";
+    $data = vault_data_load($vault);
+
+    $header = array(t('Description'), t('Data'));
+    $rows = array();
+
+    foreach ($data as $entry) {
+      $rows[] = array(
+        check_plain($entry->description),
+        check_plain(aes_decrypt($entry->data, TRUE, $_SESSION[$vault_keyname])),
+      );
+
+    }
+
+    $build['vault_data_table'] = array(
+      '#theme' => 'table',
+      '#header' => $header,
+      '#rows' => $rows,
+      '#empty' => t('There is no data in this vault. <a href="@link">Add data to this vault</a>.', array('@link' => url('vault/' . $vault->machine_name . '/add-data'))),
+    );
+
+    return $build;
   }
   // If the vault has been unlocked then allow browsing of vault data and adding vault data
 }
@@ -136,4 +157,39 @@ function vault_open_form_submit($form, $form_state) {
   else {
     drupal_set_message(t('Could not open vault.'), 'error');
   }
+}
+
+
+function vault_add_data_form($form_state, $vault) {
+  $form['data'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Data'),
+    '#description' => t('The data you want to store in the vault'),
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Add Data'),
+  );
+
+  return $form;
+}
+
+function vault_add_data_form_submit($form, &$form_state) {
+  // Get the various bits of information needed
+  global $user;
+  $vault = $form_state['build_info']['args'][0];
+  $key = $_SESSION[$vault->machine_name . '_key'];
+
+
+  // Encrypt the data the user entered
+  $enc_data = aes_encrypt($form_state['values']['data'], TRUE, $key);
+
+  // Write the record to the database
+  $record = array(
+    'uid' => $user->uid,
+    'vault' => $vault->machine_name,
+    'data' => $enc_data,
+  );
+  $result = drupal_write_record('vault_data', $record);
 }

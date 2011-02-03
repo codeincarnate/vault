@@ -26,7 +26,7 @@ function vault_menu() {
   );
 
   $items['vault/%vault'] = array(
-    'title' => 'Open',
+    'title' => 'Unlock',
     'page callback' => 'vault_view',
     'page arguments' => array(1),
     'access arguments' => array('view vaults'),
@@ -49,6 +49,27 @@ function vault_menu() {
     'type' => MENU_LOCAL_TASK,
   );
 
+
+  $items['vault/%vault/add-data'] = array(
+    'title' => 'Add Data',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('vault_add_data_form', 1),
+    'access arguments' => array('add data to vaults'),  // TODO: Need a custom callback so this doesn't show up when the vault is locked
+    'file' => 'ui/vault.ui.inc',
+    'context' => MENU_CONTEXT_PAGE,
+    'type' => MENU_LOCAL_ACTION,
+  );
+
+  $items['vault/%vault/lock'] = array(
+    'title' => 'Lock Vault',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('vault_lock_form', 1),
+    'access arguments' => array('add data to vaults'),
+    'file' => 'ui/vault.ui.inc',
+    'context' => MENU_CONTEXT_PAGE,
+    'type' => MENU_LOCAL_ACTION,
+  );
+
   return $items;
 }
 
@@ -66,6 +87,10 @@ function vault_permission() {
       'title' => t('Add Vaults'),
       'description' => t('Allows user to add secure storage vaults.'),
     ),
+    'add data to vaults' => array(
+      'title' => t('Add data to vaults'),
+      'description' => t('Allows user to add data to vaults'),
+    ),
   );
   
 }
@@ -80,7 +105,8 @@ function vault_exists($machine_name) {
     ->execute()
     ->fetchAll();
 
-  return empty($result);
+
+  return !empty($result);
 }
 
 /**
@@ -130,18 +156,20 @@ function vault_save($vault) {
 }
 
 /**
- *
+ * Make sure that a user supplied vault key matches the known key for a vault
  */
 function vault_key_match($vault, $key) {
   require_once DRUPAL_ROOT . '/includes/password.inc';
-
-  echo '<pre>';
-  var_dump($vault);
-  $crypted = _password_crypt('sha512', $key, _password_generate_salt(20));
-  var_dump($crypted);
-  echo '</pre>';
-  //exit(0);
-
   $hash = _password_crypt('sha512', $key, $vault->key_hash);
   return ($hash && $vault->key_hash == $hash);
+}
+
+function vault_data_load($vault) {
+  $result = db_select('vault_data', 'vd')->
+    fields('vd', array('vdid', 'description', 'data'))->
+    condition('vault', $vault->machine_name)->
+    execute()->
+    fetchAll();
+
+  return $result;
 }

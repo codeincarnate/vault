@@ -4,7 +4,7 @@
  * Implements hook_install().
  */
 function vault_install() {
-  db_query("ALTER TABLE {vault_data} ADD FOREIGN KEY (vault) REFERENCES {vault} (machine_name) ON DELETE CASCADE");
+  //db_query("ALTER TABLE {vault_data} ADD FOREIGN KEY (vault) REFERENCES {vault} (machine_name) ON DELETE CASCADE");
 }
 
 /**
@@ -63,6 +63,11 @@ function vault_schema() {
         'type' => 'varchar',
         'length' => 32,
         'not null' => TRUE,
+      ),
+      'description' => array(
+        'description' => 'A description of the data being stored.',
+        'type' => 'blob',
+        'size' => 'big',
       ),
       'data' => array(
         'description' => 'The data being stored.',
